@@ -10,7 +10,7 @@ class TokenType:
     INTEGER = "INTEGER"
     PLUS = "PLUS"
     MINUS = "MINUS"
-    EOF = "EOF"  # Означає кінець вхідного рядка
+    EOF = "EOF" 
     MUL = "MUL"
     DIV = "DIV"
     LPAREN = "LPAREN"
@@ -32,20 +32,20 @@ class Lexer:
         self.current_char = self.text[self.pos]
 
     def advance(self):
-        """Переміщуємо 'вказівник' на наступний символ вхідного рядка"""
+
         self.pos += 1
         if self.pos > len(self.text) - 1:
-            self.current_char = None  # Означає кінець введення
+            self.current_char = None  
         else:
             self.current_char = self.text[self.pos]
 
     def skip_whitespace(self):
-        """Пропускаємо пробільні символи."""
+
         while self.current_char is not None and self.current_char.isspace():
             self.advance()
 
     def integer(self):
-        """Повертаємо ціле число, зібране з послідовності цифр."""
+
         result = ""
         while self.current_char is not None and self.current_char.isdigit():
             result += self.current_char
@@ -88,8 +88,6 @@ class Lexer:
             raise LexicalError("Помилка лексичного аналізу")
 
         return Token(TokenType.EOF, None)
-
-
 class AST:
     pass
 
@@ -113,6 +111,7 @@ class Parser:
         self.current_token = self.lexer.get_next_token()
         
     def factor(self):
+        
         token = self.current_token
         if token.type == TokenType.INTEGER:
             self.eat(TokenType.INTEGER)
@@ -131,16 +130,14 @@ class Parser:
         raise ParsingError("Помилка синтаксичного аналізу")
 
     def eat(self, token_type):
-        """
-        Порівнюємо поточний токен з очікуваним токеном і, якщо вони збігаються,
-        'поглинаємо' його і переходимо до наступного токена.
-        """
+
         if self.current_token.type == token_type:
             self.current_token = self.lexer.get_next_token()
         else:
             self.error()
 
     def term(self):
+        
         node = self.factor()
 
         while self.current_token.type in (TokenType.MUL, TokenType.DIV):
@@ -155,6 +152,7 @@ class Parser:
         return node
 
     def expr(self):
+        
         node = self.term()
 
         while self.current_token.type in (TokenType.PLUS, TokenType.MINUS):
@@ -190,8 +188,20 @@ class Interpreter:
     def visit_BinOp(self, node):
         if node.op.type == TokenType.PLUS:
             return self.visit(node.left) + self.visit(node.right)
+        
         elif node.op.type == TokenType.MINUS:
-            return self.visit(node)
+            return self.visit(node.left) - self.visit(node.right)
+        
+        elif node.op.type == TokenType.MUL:
+            return self.visit(node.left) * self.visit(node.right) 
+         
+        elif node.op.type == TokenType.DIV:
+            right_value = self.visit(node.right)
+            if right_value == 0:
+                raise ZeroDivisionError("Division by zero")
+            return self.visit(node.left) / right_value  
+        else:
+            raise Exception(f"Unknown operation: {node.op.type}")
 
     def visit_Num(self, node):
         return node.value
